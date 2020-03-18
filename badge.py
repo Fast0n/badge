@@ -1,5 +1,5 @@
 import qrcode
-from PIL import Image, ImageChops, ImageDraw, ImageFont, ImageFilter, ImageOps
+from PIL import Image, ImageDraw, ImageFont, ImageOps
 import os
 import sys
 import requests
@@ -13,15 +13,17 @@ theme = sys.argv[5]
 custom_font = sys.argv[6]
 result = 'result'
 
+bg_w, bg_h = (1080, 1920)
+
+
 if not os.path.exists(custom_font) or not os.path.isfile(custom_font):
     print("Error: %s is not a file" % custom_font[-4:])
     sys.exit()
 
 
-def make_wallpaper(color, bkgrd, img, img1):
+def make_background(color, img, img1, colorA):
     background = Image.new('RGB', (1080, 1920), color=color)
 
-    bg_w, bg_h = background.size
     w, h = img.size
     w1, h1 = img1.size
 
@@ -33,7 +35,14 @@ def make_wallpaper(color, bkgrd, img, img1):
     bar.putalpha(mask)
     background.paste(img, offset)
     background.paste(mask, offset1, bar)
-    background.save(bkgrd+".png")
+
+    pixels = background.load()
+    for i in range(background.size[0]):
+        for j in range(background.size[1]):
+            if pixels[i, j] == colorA:
+                pixels[i, j] = color
+
+    background.save(result+".png")
 
 
 def round_corner(radius, fill, color):
@@ -54,7 +63,9 @@ def round_rectangle(size, radius, fill, color):
     return rectangle
 
 
-def makeQR(username, filename, fill_color, back_color):
+def makeQR(fill_color, back_color):
+    background = Image.open(result+".png", 'r')
+
     qr = qrcode.QRCode(
         version=4,
         box_size=15
@@ -62,94 +73,72 @@ def makeQR(username, filename, fill_color, back_color):
     qr.add_data(url)
     qr.make()
     img = qr.make_image(fill_color=fill_color, back_color=back_color)
-    img.save(filename+'.png')
-
-
-def addQR(qr, bkgrd, final):
-    img = Image.open(qr+".png", 'r')
     w, h = img.size
-    background = Image.open(bkgrd+".png", 'r')
-    bg_w, bg_h = background.size
     offset = ((bg_w-w)//2, 1140)
     background.paste(img, offset)
-    background.save(final+".png")
 
-def addText(username, name, final, color):
-    msg = name
-    msg1 = "@" + username
-
-    img = Image.open(final+".png")
-    bg_w, bg_h = img.size
-
-    draw = ImageDraw.Draw(img)
-    if custom_font[-4:] == '.ttf':
-        font = ImageFont.truetype(str(custom_font), 80)
-        font1 = ImageFont.truetype(str(custom_font), 60)
-    else:
-        print("Font non valido")
-
-    w, h = font.getsize(msg)
-    w1, h1 = font1.getsize(msg1)
-
-    draw.text(((bg_w-w)//2, 740), msg, color, font=font)
-    draw.text(((bg_w-w1)//2, 860), msg1, color, font=font1)
-
-    img.save(final+".png")
+    background.save(result+".png")
 
 
-def crop_to_circle_add(color, recolor, final):
+def addText(color):
+    background = Image.open(result+".png", 'r')
+
+    label_name = name
+    label_username = "@" + username
+    draw = ImageDraw.Draw(background)
+    font_name = ImageFont.truetype(str(custom_font), 80)
+    font_username = ImageFont.truetype(str(custom_font), 60)
+
+    w, h = font_name.getsize(label_name)
+    w1, h1 = font_username.getsize(label_username)
+
+    draw.text(((bg_w-w)//2, 740), label_name, color, font=font_name)
+    draw.text(((bg_w-w1)//2, 860), label_username, color, font=font_username)
+
+    background.save(result+".png")
+
+
+def crop_to_circle_add():
+    background = Image.open(result+".png", 'r')
+
     try:
         response = requests.get(profile_pic)
-        im = Image.open(BytesIO(response.content))
+        img = Image.open(BytesIO(response.content))
     except:
-        im = Image.open(profile_pic)
-    im = im.resize((320, 320), Image.ANTIALIAS)
-    bigsize = (im.size[0] * 3, im.size[1] * 3)
+        img = Image.open(profile_pic)
+
+    img = img.resize((320, 320), Image.ANTIALIAS)
+    bigsize = (img.size[0] * 3, img.size[1] * 3)
     mask = Image.new('L', bigsize, 0)
     draw = ImageDraw.Draw(mask)
     draw.ellipse((0, 0) + bigsize, fill=255)
-    mask = mask.resize(im.size, Image.ANTIALIAS)
-    im.putalpha(mask)
-    output = ImageOps.fit(im, mask.size, centering=(0.5, 0.5))
+    mask = mask.resize(img.size, Image.ANTIALIAS)
+    img.putalpha(mask)
+    output = ImageOps.fit(img, mask.size, centering=(0.5, 0.5))
     output.putalpha(mask)
-    img_w, img_h = im.size
-    background = Image.open(final+".png", 'r')
-    bg_w, bg_h = background.size
+    img_w, img_h = img.size
     offset = ((bg_w-img_w)//2, 390)
-    background.paste(im, offset, im)
+    background.paste(img, offset, img)
 
-    pixels = background.load()
-    for i in range(background.size[0]):
-        for j in range(background.size[1]):
-            if pixels[i, j] == color:
-                pixels[i, j] = recolor
-
-    background.save(final+".png")
+    background.save(result+".png")
 
 
 if theme == "dark":
     img = round_rectangle(
         (880, 760), 35, (229, 229, 229, 229), (26, 26, 26, 26))
     img1 = round_rectangle((870, 750), 30, (26, 26, 26, 26), (0, 0, 0, 0))
-    make_wallpaper((26, 26, 26), 'bkgrd', img, img1)
 
-    makeQR(username, 'qr', 'white', '#1a1a1a')
-    addQR('qr', 'bkgrd', result)
-    addText(username, name, result, (255, 255, 255))
-    crop_to_circle_add((208, 208, 208), (26, 26, 26), result)
-    os.remove("qr.png")
-    os.remove("bkgrd.png")
+    make_background((26, 26, 26), img, img1,  (208, 208, 208))
 
+    makeQR('white', '#1a1a1a')
+    addText('white')
 else:
     img = round_rectangle(
         (880, 760), 35, (197, 196, 202, 0), (255, 255, 255, 255))
     img1 = round_rectangle((870, 750), 30, (255, 255, 255, 255), (0, 0, 0, 0))
-    make_wallpaper((255, 255, 255), 'bkgrd', img, img1)
+    make_background((255, 255, 255), img, img1,  (255, 255, 255))
 
-    makeQR(username, 'qr', 'black', '#ffffff')
-    addQR('qr', 'bkgrd', result)
-    addText(username, name, result, (0, 0, 0))
-    crop_to_circle_add((255, 255, 255), (255, 255, 255, 255), result)
-    os.remove("qr.png")
-    os.remove("bkgrd.png")
+    makeQR('black', '#ffffff')
+    addText('black')
 
+crop_to_circle_add()
