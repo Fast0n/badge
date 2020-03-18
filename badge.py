@@ -18,7 +18,7 @@ if not os.path.exists(custom_font) or not os.path.isfile(custom_font):
     sys.exit()
 
 
-def make_wallpaper(color, img, img1):
+def make_wallpaper(color, bkgrd, img, img1):
     background = Image.new('RGB', (1080, 1920), color=color)
 
     bg_w, bg_h = background.size
@@ -33,7 +33,7 @@ def make_wallpaper(color, img, img1):
     bar.putalpha(mask)
     background.paste(img, offset)
     background.paste(mask, offset1, bar)
-    background.save('assets/background.png')
+    background.save(bkgrd+".png")
 
 
 def round_corner(radius, fill, color):
@@ -73,8 +73,6 @@ def addQR(qr, bkgrd, final):
     offset = ((bg_w-w)//2, 1140)
     background.paste(img, offset)
     background.save(final+".png")
-    os.remove("qr.png")
-
 
 def addText(username, name, final, color):
     msg = name
@@ -133,20 +131,25 @@ if theme == "dark":
     img = round_rectangle(
         (880, 760), 35, (229, 229, 229, 229), (26, 26, 26, 26))
     img1 = round_rectangle((870, 750), 30, (26, 26, 26, 26), (0, 0, 0, 0))
-    make_wallpaper((26, 26, 26), img, img1)
+    make_wallpaper((26, 26, 26), 'bkgrd', img, img1)
 
     makeQR(username, 'qr', 'white', '#1a1a1a')
-    addQR('qr', 'assets/background', result)
+    addQR('qr', 'bkgrd', result)
     addText(username, name, result, (255, 255, 255))
     crop_to_circle_add((208, 208, 208), (26, 26, 26), result)
+    os.remove("qr.png")
+    os.remove("bkgrd.png")
 
 else:
     img = round_rectangle(
         (880, 760), 35, (197, 196, 202, 0), (255, 255, 255, 255))
     img1 = round_rectangle((870, 750), 30, (255, 255, 255, 255), (0, 0, 0, 0))
-    make_wallpaper((255, 255, 255), img, img1)
+    make_wallpaper((255, 255, 255), 'bkgrd', img, img1)
 
     makeQR(username, 'qr', 'black', '#ffffff')
-    addQR('qr', 'assets/background', result)
+    addQR('qr', 'bkgrd', result)
     addText(username, name, result, (0, 0, 0))
     crop_to_circle_add((255, 255, 255), (255, 255, 255, 255), result)
+    os.remove("qr.png")
+    os.remove("bkgrd.png")
+
