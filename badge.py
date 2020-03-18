@@ -5,12 +5,17 @@ import sys
 import requests
 from io import BytesIO
 
+username = sys.argv[1]
+name = sys.argv[2]
+profile_pic = sys.argv[3]
+url = sys.argv[4]
+theme = sys.argv[5]
+custom_font = sys.argv[6]
 result = 'result'
-name = sys.argv[3]
-username = sys.argv[2]
-theme = sys.argv[1]
-profile_pic = sys.argv[4]
-url = sys.argv[5]
+
+if not os.path.exists(custom_font) or not os.path.isfile(custom_font):
+    print("Error: %s is not a file" % custom_font[-4:])
+    sys.exit()
 
 
 def make_wallpaper(color, img, img1):
@@ -79,8 +84,11 @@ def addText(username, name, final, color):
     bg_w, bg_h = img.size
 
     draw = ImageDraw.Draw(img)
-    font = ImageFont.truetype("assets/pSr.ttf", 80)
-    font1 = ImageFont.truetype("assets/pSr.ttf", 60)
+    if custom_font[-4:] == '.ttf':
+        font = ImageFont.truetype(str(custom_font), 80)
+        font1 = ImageFont.truetype(str(custom_font), 60)
+    else:
+        print("Font non valido")
 
     w, h = font.getsize(msg)
     w1, h1 = font1.getsize(msg1)
