@@ -15,30 +15,29 @@ result = 'result'
 
 bg_w, bg_h = (1080, 1920)
 
-
 if not os.path.exists(custom_font) or not os.path.isfile(custom_font):
     print("Error: %s is not a file" % custom_font[-4:])
     sys.exit()
 
 
 def make_background(color, img, img1, colorA):
-    background = Image.new('RGB', (1080, 1920), color=color)
+    background = Image.new('RGB', (bg_w, bg_h), color=color)
 
     w, h = img.size
     w1, h1 = img1.size
 
     offset = ((bg_w-w)//2, 1060)
     offset1 = ((bg_w-w1)//2, 1065)
-    mask = img1
-    mask = mask.convert("L")
+
     bar = img1
-    bar.putalpha(mask)
+    bar.putalpha(img1.convert("L"))
+
     background.paste(img, offset)
-    background.paste(mask, offset1, bar)
+    background.paste(img1.convert("L"), offset1, bar)
 
     pixels = background.load()
-    for i in range(background.size[0]):
-        for j in range(background.size[1]):
+    for i in range(bg_w):
+        for j in range(bg_h):
             if pixels[i, j] == colorA:
                 pixels[i, j] = color
 
@@ -65,7 +64,6 @@ def round_rectangle(size, radius, fill, color):
 
 def makeQR(fill_color, back_color):
     background = Image.open(result+".png", 'r')
-
     qr = qrcode.QRCode(
         version=4,
         box_size=15
@@ -82,7 +80,6 @@ def makeQR(fill_color, back_color):
 
 def addText(color):
     background = Image.open(result+".png", 'r')
-
     label_name = name
     label_username = "@" + username
     draw = ImageDraw.Draw(background)
@@ -100,7 +97,6 @@ def addText(color):
 
 def crop_to_circle_add():
     background = Image.open(result+".png", 'r')
-
     try:
         response = requests.get(profile_pic)
         img = Image.open(BytesIO(response.content))
@@ -114,30 +110,25 @@ def crop_to_circle_add():
     draw.ellipse((0, 0) + bigsize, fill=255)
     mask = mask.resize(img.size, Image.ANTIALIAS)
     img.putalpha(mask)
-    output = ImageOps.fit(img, mask.size, centering=(0.5, 0.5))
-    output.putalpha(mask)
-    img_w, img_h = img.size
-    offset = ((bg_w-img_w)//2, 390)
-    background.paste(img, offset, img)
+
+    offset = ((bg_w-img.size[0])//2, 400)
+    background.paste(img, (offset), img)
 
     background.save(result+".png")
 
 
 if theme == "dark":
     img = round_rectangle(
-        (880, 760), 35, (229, 229, 229, 229), (26, 26, 26, 26))
-    img1 = round_rectangle((870, 750), 30, (26, 26, 26, 26), (0, 0, 0, 0))
-
+        (880, 760), 35, (229, 229, 229), (26, 26, 26))
+    img1 = round_rectangle((870, 750), 30, (26, 26, 26), (0, 0, 0))
     make_background((26, 26, 26), img, img1,  (208, 208, 208))
-
     makeQR('white', '#1a1a1a')
     addText('white')
 else:
     img = round_rectangle(
-        (880, 760), 35, (197, 196, 202, 0), (255, 255, 255, 255))
-    img1 = round_rectangle((870, 750), 30, (255, 255, 255, 255), (0, 0, 0, 0))
+        (880, 760), 35, (197, 196, 202), (255, 255, 255))
+    img1 = round_rectangle((870, 750), 30, (255, 255, 255, 255), (0, 0, 0))
     make_background((255, 255, 255), img, img1,  (255, 255, 255))
-
     makeQR('black', '#ffffff')
     addText('black')
 
