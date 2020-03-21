@@ -20,9 +20,17 @@ if not os.path.exists(custom_font) or not os.path.isfile(custom_font):
     sys.exit()
 
 
-def make_background(color, img, img1, colorA):
+def make_background(color, img, img1, colorA, colorB):
     background = Image.new('RGB', (bg_w, bg_h), color=color)
 
+    draw = ImageDraw.Draw(background)
+    x, y = background.size
+    eX, eY = 320, 320
+    a = 2.5
+    bbox = (380-a, 400-a, 380+eX+a, 400+eY+a)
+
+    draw = ImageDraw.Draw(background)
+    draw.ellipse(bbox, fill=colorB)
     w, h = img.size
     w1, h1 = img1.size
 
@@ -78,7 +86,7 @@ def makeQR(fill_color, back_color):
     background.save(result+".png")
 
 
-def addText(color):
+def addText(color, colorA):
     background = Image.open(result+".png", 'r')
     label_name = name
     label_username = "@" + username
@@ -90,7 +98,7 @@ def addText(color):
     w1, h1 = font_username.getsize(label_username)
 
     draw.text(((bg_w-w)//2, 740), label_name, color, font=font_name)
-    draw.text(((bg_w-w1)//2, 860), label_username, color, font=font_username)
+    draw.text(((bg_w-w1)//2, 860), label_username, colorA, font=font_username)
 
     background.save(result+".png")
 
@@ -112,6 +120,7 @@ def crop_to_circle_add():
     img.putalpha(mask)
 
     offset = ((bg_w-img.size[0])//2, 400)
+    print(offset)
     background.paste(img, (offset), img)
 
     background.save(result+".png")
@@ -121,15 +130,16 @@ if theme == "dark":
     img = round_rectangle(
         (880, 760), 35, (229, 229, 229), (26, 26, 26))
     img1 = round_rectangle((870, 750), 30, (26, 26, 26), (0, 0, 0))
-    make_background((26, 26, 26), img, img1,  (208, 208, 208))
+    make_background((26, 26, 26), img, img1,  (208, 208, 208), 'white')
     makeQR('white', '#1a1a1a')
-    addText('white')
+    addText('white', (73, 80, 88))
 else:
     img = round_rectangle(
         (880, 760), 35, (197, 196, 202), (255, 255, 255))
     img1 = round_rectangle((870, 750), 30, (255, 255, 255, 255), (0, 0, 0))
-    make_background((255, 255, 255), img, img1,  (255, 255, 255))
+    make_background((255, 255, 255), img, img1,
+                    (255, 255, 255), (197, 196, 202))
     makeQR('black', '#ffffff')
-    addText('black')
+    addText('black', (73, 80, 88))
 
 crop_to_circle_add()
